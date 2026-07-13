@@ -50,7 +50,7 @@ catch(error){
 exports.getAllCategory=async(request,response)=>{
     try{
         // get all categories
-         const allCategories=await (await Category.find({})).sort({createdAt:-1})
+         const allCategories=await Category.find({}).sort({createdAt:-1})
          if(allCategories.length===0){
             return response.status(400).json({
                 success:false,

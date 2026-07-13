@@ -72,7 +72,7 @@ exports.updateAddress=async(request,response)=>{
         const {id}=request.params;
         const userId=request.user.id
         // check whether address is present or not
-        const isAddressPresent=await Adderess.findOne({ // as Address colecion has multiple users addresses so we have to find the address with the specific userId and addressid  
+        const isAddressPresent=await Address.findOne({ // as Address colecion has multiple users addresses so we have to find the address with the specific userId and addressid  
             _id:id,
             user:userId
         })

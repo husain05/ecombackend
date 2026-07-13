@@ -14,9 +14,9 @@ exports.createOrder=async(request,response)=>{
             const {addressId,paymentMethod}=request.body
 
             // check whether cartExists or not because when we login then we have to add product first in a cart then we can order the product
-            const cartExits=await Cart.findOne({user:userId}).populate('items.product')
+            const cartExists=await Cart.findOne({user:userId}).populate('items.product')
             // if cart not exists or cartExists.length===0 then return response
-            if(!cartExits || cartExits.length===0){
+            if(!cartExists || cartExists.length===0){
                 return response.status(400).json({
                     success:false,
                     message:`Cart is empty`
@@ -35,7 +35,7 @@ exports.createOrder=async(request,response)=>{
             }
             
             // check product stock and quantity of a product
-            for(let item of cartExits.items ){
+            for(let item of cartExists.items ){
                 if(item.quantity>item.product.stock){
                     return response.status(400).json({
                         success:false,
@@ -45,7 +45,7 @@ exports.createOrder=async(request,response)=>{
             }
 
             // if stock is present means quantity is less than the stock
-            for (let item of cartExits.items){
+            for (let item of cartExists.items){
                 // product find kro 
                 const product=await Product.findByIdAndUpdate(
                     item.product._id,
@@ -65,20 +65,20 @@ exports.createOrder=async(request,response)=>{
 
             const order=await Order.create({
                 user:userId,
-                items:cartExits.items,
+                items:cartExists.items,
                 shippingAddress:addressId,
                 paymentMethod:paymentMethod,
-                totalAmount:cartExist.totalPrice
+                totalAmount:cartExists.totalPrice
             })
         
 
             // order created 
             // cart empty krdo
 
-            cartExits.items=[]
+            cartExists.items=[]
             cartExists.totalPrice=0;
 
-          await cartExits.save()
+          await cartExists.save()
             
 
           // now return successful response
@@ -102,7 +102,7 @@ exports.createOrder=async(request,response)=>{
 exports.getAllOrders=async(request,response)=>{
     try{
         const userId=request.user.id
-        const allOrders=await Order.find(userId).populate('items.product','title description price images').populate('shippingAddress').sort({createdAt:-1}) // latest orders leke ao
+        const allOrders=await Order.find({user:userId}).populate('items.product','title description price images').populate('shippingAddress').sort({createdAt:-1}) // latest orders leke ao
 
         // now return response 
         return response.status(200).json({
@@ -127,7 +127,7 @@ exports.getAllOrders=async(request,response)=>{
 exports.getSingleOrder=async(request,response)=>{
     try{
          const userId=request.user.id
-         const orderId=request.params;
+         const {orderId}=request.params;
         
          const singleOrder=await Order.findOne({_id:orderId,user:userId}).populate('items.product').populate('shippingAddress')
 
@@ -174,7 +174,7 @@ exports.updateOrderStatus=async(request,response)=>{
 
         // if order found then update the orderStatus
         orderExists.orderStatus=orderStatus
-        await orderExists.sve()
+        await orderExists.save()
 
         // return successful response
         return response.status(200).json({
@@ -187,7 +187,7 @@ exports.updateOrderStatus=async(request,response)=>{
     catch(error){
         return response.status(500).json({
             success:false,
-            error:error.messag,
+            error:error.message,
             message:`Something went wrong while updating order status`
         })
     }
@@ -232,7 +232,7 @@ exports.cancelOrder=async(request,response)=>{
 
         // now cancel order 
         orderExists.orderStatus='Cancelled'
-
+        await orderExists.save()
         // now return successfull response
         return response.status(200).json({
             success:true,

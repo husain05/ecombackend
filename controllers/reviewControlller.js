@@ -62,7 +62,7 @@ exports.getAllReviews=async(request,response)=>{
     try{
         const {productId}=request.params; // kisi ek product ke ke saare reviews leke ao
         // fetch all products reviews 
-        const allReviews=await Review.find(productId).populate('user', 'firstName lastName')
+        const allReviews=await Review.find({product:productId}).populate('user', 'firstName lastName')
 
         // agar reviews empty hai particular product petoh response return krdo
         if(!allReviews || allReviews.length===0){

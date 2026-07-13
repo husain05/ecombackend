@@ -4,7 +4,7 @@ const Product=require('../models/Product')
 exports.addToCart=async(request,response)=>{
    try{
      // fetch the userId from the query 
-    const {userId}=request.user;
+    const userId=request.user.id;
     const {productId,quantity}=request.body
 
     // check whether the product available in the product collection or not
@@ -25,7 +25,7 @@ exports.addToCart=async(request,response)=>{
     //find cart
     // mongo db me cart collection ke ander 100's of users present honge isliye phle cart fetch krke lao jo user login hai
 
-    const userCart=await Cart.findOne({user:userId})
+    let userCart=await Cart.findOne({user:userId})
     // if user cart is not present 
     if(!userCart){
          // create cart 
@@ -68,9 +68,9 @@ exports.addToCart=async(request,response)=>{
 //getUserCart
 exports.getUserCart =async(request,response)=>{
     try{
-        const {userId}=request.user;
+         const userId=request.user.id;
         // check whether cart exists with specific userid or not 
-        const cartExists=await Cart.findOne(userId).populate('items.product','title description price stock images')
+        const cartExists=await Cart.findOne({user:userId}).populate('items.product','title description price stock images')
         if(!cartExists){
             return response.status(400).json({
                 success:false,
@@ -102,7 +102,7 @@ exports.getUserCart =async(request,response)=>{
 exports.updateQuantity=async(request,response)=>{
     try{
         // get userId from request.user
-         const {userId}=request.user;
+        const userId=request.user.id;
         //fetch productId from request.params
         const {productId}=request.params;
         //fetch quantity from request.body
@@ -116,7 +116,7 @@ exports.updateQuantity=async(request,response)=>{
         })
        }
        // check whether user cart is present in cart collection or not 
-       const cartExists=await Cart.findOne(userId)
+       const cartExists=await Cart.findOne({user:userId})
        // if cart is not present return response
        if(!cartExists){
         return response.status(400).json({
@@ -166,8 +166,9 @@ exports.updateQuantity=async(request,response)=>{
     }
     catch(error){
         console.log(error);
-        return response.status.json({
+        return response.status(500).json({
             success:false,
+            error:error.message,
             message:`Something went wrong while updating the quantity of a product`
         })
     }
@@ -177,10 +178,10 @@ exports.updateQuantity=async(request,response)=>{
 exports.removeProductFromCart=async(request,response)=>{
     try{
         // fetch userid from request.user object
-        const {userId}=request.user;
+        const userId=request.user.id;
         const {productId}=request.params
         // check whether usercart exists with specific user id in cart collection
-        const cartExists =await Cart.findById(userId)
+        const cartExists =await Cart.findOne({user:userId})
         if(!cartExists){
             return response.status(400).json({
                 success:false,
@@ -204,10 +205,11 @@ exports.removeProductFromCart=async(request,response)=>{
             return item.product.toString()!==productId // filter method check all the item and whose id will be matched it removes eh product or viceversa
         })
 
+        cartExists.items=removeProduct
         // now update the totalPrice
         cartExists.totalPrice=cartExists.items.reduce((total,item)=>{
-            return totalPrice+(item.price*item.quantity)
-        },o)
+            return total+(item.price*item.quantity)
+        },0)
 
         await cartExists.save();
         // send successfull response
@@ -230,9 +232,9 @@ exports.removeProductFromCart=async(request,response)=>{
 // clear cart 
 exports.clearCart=async(request,response)=>{
     try{
-         const {userId}=request.user;
+         const userId=request.user.id;
          //check whether user cart exists in db cart collection 
-         const cartExists=await Cart.findById(userId);
+         const cartExists=await Cart.findOne({user:userId});
          // if not cart exists then return response
          if(!cartExists){
             return response.status(400).json({

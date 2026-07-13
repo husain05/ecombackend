@@ -4,9 +4,9 @@ exports. authentication=(request,response,next)=>{
     try{
         console.log("Auth middleware reached");
         // now fetch token from where it is saved during login
-         const accessToken =request.cookies?.accessToken ||request.header("Authorization")?.replace("Bearer ", "");       
+         const accessToken = request.cookies?.accessToken ||request.header("Authorization")?.replace("Bearer ", "");       
          console.log("token from cookie :",request.cookies?.accessToken)
-          console.log("token from cookie :",request.header)
+        console.log("token from header :",request.header("Authorization"));
 
         // if token is expires or the value of token is not present
         if(!accessToken){
@@ -19,6 +19,7 @@ exports. authentication=(request,response,next)=>{
         
         // if token found then decode the token
         const decode = jwt.verify(accessToken,process.env.JWT_SECRET)
+        console.log(jwt.decode(accessToken));
 
         request.user=decode // for authorization
 

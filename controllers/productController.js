@@ -11,7 +11,7 @@ exports.createProduct=async(request,response)=>{
                 message:`All fields are required`
             })
          }
-         // check category exists or not through categoryid coming from boy with the name category  
+         // check category exists or not through categoryid coming from body with the name category  
          const categoryExists =await Category.findById(category)
          if(!categoryExists){
             return response.status(400).json({
@@ -74,7 +74,7 @@ exports.getSingleProduct=async(request,response)=>{
     try{
          // fetch id from request.params
          const {productId}=request.params;
-         const productExists=await Product.findById(productId).populate('category','name,slug');
+         const productExists=await Product.findById(productId).populate('category','name slug');
          if(!productExists){
             return response.status(400).json({
                 success:false,
@@ -157,7 +157,7 @@ exports.updateProduct=async(request,response)=>{
     }
     catch(error){
         console.log(error)
-        return response.satus(500).json({
+        return response.status(500).json({
             success:false,
             error:error.message,
             message:`Something went wrong while updating the product`
@@ -180,7 +180,7 @@ exports.deleteProduct=async(request,response)=>{
         }
 
         // if product found
-        const deleteProduct=await Product.findByIdAndDelete(id)
+        const deleteProduct=await Product.findByIdAndDelete(productId)
         return response.status(200).json({
             success:true,
             message:`Product deleted successfully`
@@ -203,7 +203,7 @@ exports.deleteProduct=async(request,response)=>{
 exports.searchAllProductsByQuery=async(request,response)=>{
     try{
 
-        const {page=1,limit=10,search,category,minPrice,maxPrice,sort}=request.query;
+        const {page=1,limit=2,search,category,minPrice,maxPrice,sort}=request.query;
         const pageNumber = Number(page); //* - + yh sb convert krdete hain string ko number me but yaha e krna better apprach hai
         const limitNumber = Number(limit);
         const query={}
@@ -231,7 +231,7 @@ exports.searchAllProductsByQuery=async(request,response)=>{
         }
         // sorting
         // let say user didnot sort 
-        const sortOption={createdAt:-1}// initially descending order;
+        let sortOption={createdAt:-1}// initially descending order;
     
         // sort jo query se aya or user ne ascending order me chose kra hai product price listing -> PRICE ASCENDING MEANS LOW TO HIGH
        if(sort==='price_asc'){
@@ -245,25 +245,25 @@ exports.searchAllProductsByQuery=async(request,response)=>{
 
        // latest product show ho
         if(sort==='latest'){
-        sortOption={price:-1}
+        sortOption={createdAt:-1}
        }
        // oldest product
         if(sort==='oldest'){
-        sortOption={price:1}
+        sortOption={createstAt:1}
        }
 
        const getallProductbySearchQuery=await Product.find(query).populate('category','name slug').sort(sortOption).limit(limitNumber).skip((pageNumber-1)*limitNumber)
-       const totalDocuments=await Product.countDouments(query) // total douments for finding totalPages 
+       const totalDocuments=await Product.countDocuments(query) // total douments for finding totalPages 
 
        // find returns an array so we can use getallProductgetallProductbySearchQuery.length for finding total documents
 
-       return response.status(200).jon({
+       return response.status(200).json({
         success:true,
         message:`Product data fetched successfully by query `,
         data:getallProductbySearchQuery,
         curentPage:pageNumber,
         limit:limitNumber,
-        totalProducts=totalDocuments,
+        totalProducts:totalDocuments,
         totalPages:Math.ceil(totalDocuments/limit),
         skip:(pageNumber-1)*limit
 
@@ -272,7 +272,7 @@ exports.searchAllProductsByQuery=async(request,response)=>{
     }
     catch(error){
         console.log(error);
-        return response.json({
+        return response.status(500).json({
             success:false,
             error:error.message,
             message:`Something went wrong while fetch all product by search query`

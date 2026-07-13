@@ -3,14 +3,15 @@ const User=require('../models/User')
 const bcrypt=require('bcrypt')
 const {generateToken}=require('../utils/generateToken')
 const {generateRefreshToken}=require('../utils/generateToken')
+const OTP=require('../models/OTP')
 // signup api 
 exports.signUp=async(request,response)=>{
     try{
 
         
         // fetch data from request.body
-        const {firstName,lastName,userName,email,password,phone}=request.body;
-        if(!firstName || !lastName || !userName || !email || !password || !phone){
+        const {firstName,lastName,userName,email,password,phone,otp}=request.body;
+        if(!firstName || !lastName || !userName || !email || !password || !phone || !otp){
             return response.status(400).json({
                 success:false,
                 message:`All fields are required`,
@@ -32,7 +33,7 @@ exports.signUp=async(request,response)=>{
             })
         }
         //check whether user exits or not
-        // we can check user through phone number, username and email ??
+        // we can also check user through phone number, username and email ??
         const userExists=await User.findOne({email:email});
         if(userExists){
             return response.status(400).json({
@@ -40,6 +41,28 @@ exports.signUp=async(request,response)=>{
                 message:`User is already registered`
             })
         }
+
+        //find recent otp of the email
+        const recentOtp=await OTP.findOne({email}).sort({createdAt:-1})
+        //if not recent otp found
+        if(!recentOtp){
+            return response.status(400).json({
+                succesS:false,
+                message:`OTP Expired`
+            })
+        }
+
+        // verify otp mens compare otp coming from body with the otp from db
+        if(recentOtp.otp!==otp){
+            return response.status(400).json({
+                success:false,
+                message:`Invalid Otp`
+            })
+        }
+        
+
+
+
         // now hash the password
         let hashedPassword;
         try{
@@ -59,7 +82,7 @@ exports.signUp=async(request,response)=>{
         }
         // now save user data in database 
         const saveUser=await User.create({firstName,lastName,userName,email,password:hashedPassword,phone});
-        saveUser.refreshToken=undefined
+        saveUser.refreshToken=undefined // saveUser me se refresh token ki value undefined krdi for security or password ki bhi bcz we are sending user data in response so, thats why we remove sensitive information
         return response.status(200).json({
             success:true,
             message:`User created Successfully`,
@@ -78,6 +101,7 @@ exports.signUp=async(request,response)=>{
 
 // login controller
 exports.logIn=async(request,response)=>{
+        console.log("Login Controller Reached");
     try{
         const {email,password}=request.body;
         if(!email || !password){
@@ -110,6 +134,7 @@ exports.logIn=async(request,response)=>{
       const payload={
         id:userExists._id,
         email:userExists.email,
+        role:userExists.role
       }
 
       // call generateToken function from utils 
@@ -127,6 +152,10 @@ exports.logIn=async(request,response)=>{
         maxAge:7*24*60*60*1000
      })
       
+
+    // //  remove pwd and rfresh token from the response 
+    //  userExists.password=undefined
+    //  userExists.refreshToken=undefined
      // now return json with successful code
     return  response.status(200).json({
         success:true,
@@ -136,7 +165,7 @@ exports.logIn=async(request,response)=>{
            email: userExists.email,
            role:userExists.role
         },
-        accessToken:accessToken,
+        accessToken:accessToken, // accessToken in response to save this token on frontend
      })
 
     }
@@ -152,10 +181,10 @@ exports.logIn=async(request,response)=>{
 
 
 // logout controller 
-exports.logout=async(request,response)=>{
+exports.logOut=async(request,response)=>{
     try{
-         const {userId}=request.params;
-         const userExists=await User.findById(userId);
+         const userId=request.user.id;
+         const userExists=await User.findById(userId); //checking user to set value of refreshToken=null to logout
         //  check user exists or not 
          if(!userExists){
             return response.status(400).json({

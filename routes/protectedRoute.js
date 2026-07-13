@@ -1,9 +1,9 @@
 const express=require('express')
 const router=express.Router()
 
-const{auth}=require('../middleware/auth');
+const{authentication}=require('../middleware/auth');
 
-router.get('/me',auth,(request,response)=>{
+router.get('/me',authentication,(request,response)=>{
     response.json({
        success:true,
        user:request.user
