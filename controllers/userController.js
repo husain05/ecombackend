@@ -159,6 +159,7 @@ exports.logIn=async(request,response)=>{
      // now return json with successful code
     return  response.status(200).json({
         success:true,
+        message:"User Loggedin Successfully",
         data:{
            id:userExists._id,
            username:userExists.userName,
@@ -202,7 +203,8 @@ exports.logOut=async(request,response)=>{
 
         return response.status(200).json({
             success:true,
-            message:`Logout Successfull`
+            message:`Logout Successfull`,
+            data:userExists
         })
 
     }

@@ -9,6 +9,6 @@ router.get('/all/products',authentication,isAdmin,getAllProducts)
 router.get('/single/product/:productId',authentication,isAdmin,getSingleProduct)
 router.put('/update/product/:productId',authentication,isAdmin,updateProduct)
 router.delete('/delete/product/:productId',authentication,isAdmin,deleteProduct)
-router.get('/all-products-by-query/',authentication,searchAllProductsByQuery)
+router.get('/all-products-by-query',authentication,searchAllProductsByQuery)
 
 module.exports=router
