@@ -22,6 +22,7 @@ exports.refreshTokenController=async(request,response)=>{
 
     // Naya access token
     const accessToken = generateToken({
+    firstName:user.firstName,
     id: user._id,
     email: user.email,
     role:user.role

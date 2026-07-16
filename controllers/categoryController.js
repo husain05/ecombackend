@@ -3,7 +3,7 @@ const { generateSlug } = require('../utils/generateSlug');
 
 exports.createCategory=async(request,response)=>{
 try{
-    const {name,description}=request.body;
+    const {name,description,image}=request.body;
     // check if name field is available or not
     if(!name){
         return response.status(400).json({
@@ -25,6 +25,7 @@ try{
     // create Category
     const createCategory=await Category.create({
         name,
+        image,
         description,
         slug
     })
@@ -160,7 +161,6 @@ const isCategoryPresent=await Category.findById(categoryId);
 if(!isCategoryPresent){
     return response.status(400).json({
         success:false,
-        error:error.message,
         message:`Category is not present with the specific id`
     })
 } 

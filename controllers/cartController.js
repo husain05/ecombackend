@@ -265,7 +265,3 @@ exports.clearCart=async(request,response)=>{
         })
     }
 }
-
-
-
-

@@ -17,6 +17,15 @@ exports.signUp=async(request,response)=>{
                 message:`All fields are required`,
             })
         }
+
+        //userName cannot end with gmail.com
+        if(userName.endsWith('gmail.com')){
+            return response.status(400).json({
+                success:false,
+                message:`username cannot ends with gmail.com`
+            })
+        }
+        
         // check whether email ends with @gmail.com or not
         if(!email.endsWith('@gmail.com')){
             return response.status(400).json({
@@ -34,11 +43,17 @@ exports.signUp=async(request,response)=>{
         }
         //check whether user exits or not
         // we can also check user through phone number, username and email ??
-        const userExists=await User.findOne({email:email});
+        const userExists = await User.findOne({
+            $or: [
+                {userName:userName},
+                { email: email },
+                { phone: phone }
+            ]
+            });
         if(userExists){
             return response.status(400).json({
                 success:false,
-                message:`User is already registered`
+                message:`User is already registered with same ${email} or ${phone} or ${userName}`
             })
         }
 
@@ -103,7 +118,7 @@ exports.signUp=async(request,response)=>{
 exports.logIn=async(request,response)=>{
         console.log("Login Controller Reached");
     try{
-        const {email,password}=request.body;
+        const {email,userName,phone,password}=request.body;
         if(!email || !password){
             return response.status(400).json({
                 success:false,
@@ -112,7 +127,13 @@ exports.logIn=async(request,response)=>{
         }
         // check user exists or not
         // check user by phone number, username and email
-        const userExists=await User.findOne({email});
+         const userExists = await User.findOne({
+            $or: [
+                {userName:userName},
+                { email: email },
+                { phone: phone }
+            ]
+            });
         if(!userExists){
             return response.status(400).json({
                 success:false,
@@ -132,6 +153,7 @@ exports.logIn=async(request,response)=>{
          
       // if password is correct .... create token 
       const payload={
+       
         id:userExists._id,
         email:userExists.email,
         role:userExists.role
@@ -161,6 +183,7 @@ exports.logIn=async(request,response)=>{
         success:true,
         message:"User Loggedin Successfully",
         data:{
+           firstname:userExists.firstName,
            id:userExists._id,
            username:userExists.userName,
            email: userExists.email,

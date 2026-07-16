@@ -172,7 +172,7 @@ exports.deleteProduct=async(request,response)=>{
         const {productId}=request.params;
         //check whether product present or not
         const isProduct=await Product.findById(productId);
-        if(!productId){
+        if(!isProduct){
             return response.status(400).json({
                 success:false,
                 message:`Product does not found whith the specific id`
@@ -249,7 +249,7 @@ exports.searchAllProductsByQuery=async(request,response)=>{
        }
        // oldest product
         if(sort==='oldest'){
-        sortOption={createstAt:1}
+        sortOption={createdAt:1}
        }
 
        const getallProductbySearchQuery=await Product.find(query).populate('category','name slug').sort(sortOption).limit(limitNumber).skip((pageNumber-1)*limitNumber)
@@ -264,8 +264,8 @@ exports.searchAllProductsByQuery=async(request,response)=>{
         curentPage:pageNumber,
         limit:limitNumber,
         totalProducts:totalDocuments,
-        totalPages:Math.ceil(totalDocuments/limit),
-        skip:(pageNumber-1)*limit
+        totalPages:Math.ceil(totalDocuments/limitNumber),
+        skip:(pageNumber-1)*limitNumber
 
        })
         
